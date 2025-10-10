@@ -1,9 +1,8 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import { Html } from '@react-three/drei';
+import { Html, useGLTF } from '@react-three/drei';
 
 const GLOBE_CONFIG = {
   countryColor: 0x000000,
@@ -121,11 +120,8 @@ function AnimatedIcon() {
 }
 
 function SimpleGlobe({ onLoad, selectedLanguage }) {
-  // Use jsDelivr CDN to serve the GLB file with correct MIME type
-  const modelUrl = import.meta.env.DEV
-    ? `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`
-    : 'https://cdn.jsdelivr.net/gh/martinbaud/portfolio@master/public/assets/models/atlas_ico_subdiv_7.glb';
-  const gltf = useLoader(GLTFLoader, modelUrl);
+  const modelUrl = `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`;
+  const gltf = useGLTF(modelUrl);
   const groupRef = useRef();
   const [isInitialized, setIsInitialized] = useState(false);
   const [clickedCountry, setClickedCountry] = useState(null);
@@ -451,3 +447,7 @@ export default function GlobeViewer({ className = '', selectedLanguage = 'en' })
     </div>
   );
 }
+
+// Preload the GLB model
+const modelUrl = `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`;
+useGLTF.preload(modelUrl);

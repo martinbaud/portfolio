@@ -34,6 +34,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Debug - Check GLB file in dist
+        run: |
+          ls -lh dist/assets/models/ || echo "models directory not found"
+          file dist/assets/models/atlas_ico_subdiv_7.glb || echo "GLB file not found"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
