@@ -65,7 +65,7 @@ function App() {
         <div className="navbar-content">
           <div className="navbar-logo">
             <div className="logo-wrapper">
-              <img src="/assets/images/aeryflux_logo.png" alt="Aeryflux Logo" className="logo-image" />
+              <img src={`${import.meta.env.BASE_URL}assets/images/aeryflux_logo.png`} alt="Aeryflux Logo" className="logo-image" />
               <div className={`logo-spinner ${showSpinner ? 'show-on-load' : ''}`}></div>
             </div>
           </div>

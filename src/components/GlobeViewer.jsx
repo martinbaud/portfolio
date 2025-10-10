@@ -152,7 +152,7 @@ function AnimatedIcon() {
         }}>
           <img
             ref={imgRef}
-            src="/assets/images/hand-gestures.svg"
+            src={`${import.meta.env.BASE_URL}assets/images/hand-gestures.svg`}
             alt="Hand gesture"
             style={{
               width: '40px',
