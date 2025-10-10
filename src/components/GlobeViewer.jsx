@@ -174,8 +174,7 @@ function SimpleGlobe({ onLoad, selectedLanguage }) {
     : 'https://raw.githubusercontent.com/martinbaud/portfolio/master/public/assets/models/atlas_ico_subdiv_7.glb';
   const gltf = useGLBModel(modelUrl);
 
-  // Return null while loading
-  if (!gltf) return null;
+  // Initialize all hooks unconditionally (React rules of hooks)
   const groupRef = useRef();
   const [isInitialized, setIsInitialized] = useState(false);
   const [clickedCountry, setClickedCountry] = useState(null);
@@ -190,6 +189,9 @@ function SimpleGlobe({ onLoad, selectedLanguage }) {
   const previousMousePosition = useRef({ x: 0, y: 0 });
   const rotationVelocity = useRef({ x: 0, y: 0 });
   const userRotation = useRef({ x: 0, y: 0 });
+
+  // Return null AFTER all hooks if still loading
+  if (!gltf) return null;
 
   useEffect(() => {
     if (gltf && typeof onLoad === 'function') {
