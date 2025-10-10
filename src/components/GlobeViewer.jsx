@@ -120,7 +120,10 @@ function AnimatedIcon() {
 }
 
 function SimpleGlobe({ onLoad, selectedLanguage }) {
-  const modelUrl = `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`;
+  // Load GLB from GitHub Releases for production (better handling of large binary files)
+  const modelUrl = import.meta.env.DEV
+    ? `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`
+    : 'https://github.com/martinbaud/portfolio/releases/download/v1.0.0/atlas_ico_subdiv_7.glb';
   const gltf = useGLTF(modelUrl);
   const groupRef = useRef();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -448,6 +451,13 @@ export default function GlobeViewer({ className = '', selectedLanguage = 'en' })
   );
 }
 
-// Preload the GLB model
-const modelUrl = `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`;
-useGLTF.preload(modelUrl);
+// Preload the GLB model for both dev and production
+const devModelUrl = '/assets/models/atlas_ico_subdiv_7.glb';
+const prodModelUrl = 'https://github.com/martinbaud/portfolio/releases/download/v1.0.0/atlas_ico_subdiv_7.glb';
+
+// Preload the correct model based on environment
+if (import.meta.env.DEV) {
+  useGLTF.preload(devModelUrl);
+} else {
+  useGLTF.preload(prodModelUrl);
+}
