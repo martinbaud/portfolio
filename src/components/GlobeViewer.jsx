@@ -5,29 +5,47 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Html } from '@react-three/drei';
 
-// Custom hook to load GLB with proper binary handling
+// Custom hook to load GLB with proper binary handling using Blob URL
 function useGLBModel(url) {
   const [gltf, setGltf] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const loader = new GLTFLoader();
+    let blobUrl = null;
 
-    // Force binary mode by fetching as arraybuffer first
+    // Fetch as blob, create object URL, then load
     fetch(url)
-      .then(response => response.arrayBuffer())
-      .then(buffer => {
-        loader.parse(buffer, '', (result) => {
-          setGltf(result);
-        }, (err) => {
-          console.error('Error parsing GLB:', err);
-          setError(err);
-        });
+      .then(response => response.blob())
+      .then(blob => {
+        // Create a local blob URL
+        blobUrl = URL.createObjectURL(blob);
+
+        // Load the GLB from the blob URL
+        loader.load(
+          blobUrl,
+          (result) => {
+            setGltf(result);
+            // Clean up blob URL after loading
+            URL.revokeObjectURL(blobUrl);
+          },
+          undefined,
+          (err) => {
+            console.error('Error loading GLB:', err);
+            setError(err);
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+          }
+        );
       })
       .catch(err => {
         console.error('Error fetching GLB:', err);
         setError(err);
       });
+
+    // Cleanup on unmount
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
   }, [url]);
 
   if (error) throw error;
