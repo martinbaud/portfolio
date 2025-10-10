@@ -291,7 +291,8 @@ body {
 
 .hero-globe {
   width: 100%;
-  height: 600px;
+  height: clamp(400px, 50vh, 600px); /* Adaptive height between 400px and 600px based on viewport */
+  min-height: 400px;
   animation: fadeIn 1s ease-out 0.3s backwards;
 }
 
@@ -715,9 +716,27 @@ body {
   margin: 0 auto;
 }
 
+/* Tablet landscape and smaller desktops */
+@media (max-width: 1200px) {
+  .hero-container {
+    gap: 40px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero-title {
+    font-size: 48px;
+  }
+
+  .hero-globe {
+    height: clamp(450px, 55vh, 550px);
+  }
+}
+
+/* Tablet portrait */
 @media (max-width: 1024px) {
   .hero-container {
     grid-template-columns: 1fr;
+    gap: 30px;
   }
 
   .hero-text {
@@ -725,8 +744,14 @@ body {
     text-align: center;
   }
 
+  .hero-title {
+    font-size: 44px;
+  }
+
   .hero-globe {
-    height: 450px;
+    height: clamp(400px, 60vh, 500px);
+    max-width: 600px;
+    margin: 0 auto;
   }
 
   .cta-group {
@@ -739,6 +764,26 @@ body {
   }
 }
 
+/* Mobile landscape and small tablets */
+@media (max-width: 900px) {
+  .hero-section {
+    padding: 110px 30px 50px;
+  }
+
+  .hero-title {
+    font-size: 40px;
+  }
+
+  .hero-subtitle {
+    font-size: 22px;
+  }
+
+  .hero-globe {
+    height: clamp(380px, 65vh, 480px);
+  }
+}
+
+/* Mobile portrait */
 @media (max-width: 768px) {
   .navbar {
     padding: 15px 20px;
@@ -750,23 +795,38 @@ body {
   }
 
   .hero-section {
-    padding: 120px 20px 40px; /* Increased top padding for more space after header */
+    padding: 120px 20px 40px;
   }
 
   .hero-title {
-    font-size: 48px;
+    font-size: clamp(36px, 8vw, 48px); /* Responsive font size */
+    text-align: center;
   }
 
   .hero-subtitle {
-    font-size: 24px;
+    font-size: clamp(20px, 5vw, 24px);
+    text-align: center;
+  }
+
+  .hero-description {
+    text-align: center;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .hero-globe {
-    height: 450px; /* Increased from 350px to 450px */
+    height: clamp(450px, 70vh, 550px); /* Bigger on mobile, adaptive */
+    max-width: 100%;
+  }
+
+  .cta-group {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .section {
-    padding: 60px 30px; /* Increased horizontal padding from 20px to 30px */
+    padding: 60px 30px;
   }
 
   .section-title {
@@ -776,7 +836,7 @@ body {
 
   .github-grid {
     grid-template-columns: 1fr;
-    padding: 0 10px; /* Center content better */
+    padding: 0 10px;
   }
 
   .github-card {
@@ -870,6 +930,30 @@ body {
   }
 }
 
+/* Small mobile devices */
+@media (max-width: 600px) {
+  .hero-section {
+    padding: 130px 20px 40px;
+  }
+
+  .hero-title {
+    font-size: clamp(32px, 7vw, 40px);
+  }
+
+  .hero-subtitle {
+    font-size: clamp(18px, 4.5vw, 22px);
+  }
+
+  .hero-globe {
+    height: clamp(420px, 75vh, 500px); /* Even bigger on smaller screens */
+  }
+
+  .section {
+    padding: 50px 20px;
+  }
+}
+
+/* Extra small mobile devices */
 @media (max-width: 480px) {
   .logo-image {
     height: 45px;
@@ -882,26 +966,29 @@ body {
   }
 
   .hero-section {
-    padding: 140px 20px 40px; /* Even more space on very small screens */
+    padding: 140px 15px 40px;
   }
 
   .hero-title {
-    font-size: 32px;
+    font-size: clamp(28px, 6.5vw, 36px);
     text-align: center;
+    line-height: 1.2;
   }
 
   .hero-subtitle {
-    font-size: 18px;
+    font-size: clamp(16px, 4vw, 20px);
     text-align: center;
   }
 
   .hero-description {
-    font-size: 14px;
+    font-size: clamp(13px, 3.5vw, 15px);
     text-align: center;
+    line-height: 1.5;
   }
 
   .hero-globe {
-    height: 380px; /* Increased from 300px to 380px for better visibility */
+    height: clamp(400px, 80vh, 480px); /* Maximum size on small screens */
+    min-height: 400px;
   }
 
   .cta-group {
@@ -909,36 +996,39 @@ body {
     width: 100%;
     align-items: center;
     padding: 0 20px;
+    gap: 15px;
   }
 
   .cta-button {
     width: 100%;
-    max-width: 300px; /* Prevent buttons from being too wide */
+    max-width: 300px;
     text-align: center;
     justify-content: center;
+    padding: 12px 24px;
   }
 
   .section {
-    padding: 60px 20px;
+    padding: 50px 15px;
   }
 
   .section-title {
-    font-size: 32px;
+    font-size: clamp(28px, 6vw, 32px);
     text-align: center;
   }
 
   .section-subtitle {
     text-align: center;
     padding: 0 10px;
+    font-size: clamp(16px, 4vw, 18px);
   }
 
   .github-card h3, .project-card h3, .skill-category h3 {
-    font-size: 22px;
+    font-size: clamp(20px, 5vw, 22px);
   }
 
   .skill-category, .project-card, .github-card {
-    padding: 25px;
-    margin: 0 10px; /* Add side margins for better centering */
+    padding: 20px;
+    margin: 0 5px;
   }
 
   .project-header {
