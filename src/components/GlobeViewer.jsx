@@ -324,17 +324,101 @@ function SimpleGlobe({ onLoad, selectedLanguage }) {
       gl.domElement.style.cursor = 'grab';
     };
 
+    const handleTouchStart = (event) => {
+      if (!isInitialized || event.touches.length === 0) return;
+      event.preventDefault();
+
+      const touch = event.touches[0];
+      isDragging.current = true;
+      hasDragged.current = false;
+      previousMousePosition.current = {
+        x: touch.clientX,
+        y: touch.clientY
+      };
+    };
+
+    const handleTouchMove = (event) => {
+      if (!isInitialized || event.touches.length === 0) return;
+      event.preventDefault();
+
+      const touch = event.touches[0];
+      const rect = gl.domElement.getBoundingClientRect();
+      mouse.current.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.current.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+
+      if (isDragging.current) {
+        const deltaX = touch.clientX - previousMousePosition.current.x;
+        const deltaY = touch.clientY - previousMousePosition.current.y;
+
+        if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+          hasDragged.current = true;
+        }
+
+        rotationVelocity.current.y = deltaX * 0.005;
+        rotationVelocity.current.x = deltaY * 0.005;
+
+        previousMousePosition.current = {
+          x: touch.clientX,
+          y: touch.clientY
+        };
+      }
+    };
+
+    const handleTouchEnd = (event) => {
+      if (!isInitialized) return;
+      event.preventDefault();
+
+      if (!hasDragged.current && event.changedTouches.length > 0) {
+        const touch = event.changedTouches[0];
+        const rect = gl.domElement.getBoundingClientRect();
+        mouse.current.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.current.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.current.setFromCamera(mouse.current, camera);
+        const intersects = raycaster.current.intersectObjects(
+          Object.values(countryMeshesRef.current),
+          false
+        );
+
+        if (intersects.length > 0) {
+          const clickedMesh = intersects[0].object;
+          const countryCode = Object.keys(countryMeshesRef.current).find(
+            key => countryMeshesRef.current[key] === clickedMesh
+          );
+          if (countryCode) {
+            const baseCountryName = countryCode.replace(/_\d+$/, '');
+            setClickedCountry(baseCountryName);
+          }
+        }
+      }
+
+      isDragging.current = false;
+      hasDragged.current = false;
+    };
+
     gl.domElement.addEventListener('mousedown', handleMouseDown);
     gl.domElement.addEventListener('mousemove', handleMouseMove);
     gl.domElement.addEventListener('mouseup', handleMouseUp);
     gl.domElement.addEventListener('mouseleave', handleMouseUp);
+
+    gl.domElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    gl.domElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    gl.domElement.addEventListener('touchend', handleTouchEnd, { passive: false });
+    gl.domElement.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
     gl.domElement.style.cursor = 'grab';
+    gl.domElement.style.touchAction = 'none';
 
     return () => {
       gl.domElement.removeEventListener('mousedown', handleMouseDown);
       gl.domElement.removeEventListener('mousemove', handleMouseMove);
       gl.domElement.removeEventListener('mouseup', handleMouseUp);
       gl.domElement.removeEventListener('mouseleave', handleMouseUp);
+
+      gl.domElement.removeEventListener('touchstart', handleTouchStart);
+      gl.domElement.removeEventListener('touchmove', handleTouchMove);
+      gl.domElement.removeEventListener('touchend', handleTouchEnd);
+      gl.domElement.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [isInitialized, camera, gl]);
 
