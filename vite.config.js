@@ -7,6 +7,7 @@ export default defineConfig({
   assetsInclude: ['**/*.glb', '**/*.otf'],
   publicDir: 'public',
   build: {
+    // Prevent inlining of GLB files
     assetsInlineLimit: 0
   },
   test: {
