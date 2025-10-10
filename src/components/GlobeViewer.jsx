@@ -190,9 +190,6 @@ function SimpleGlobe({ onLoad, selectedLanguage }) {
   const rotationVelocity = useRef({ x: 0, y: 0 });
   const userRotation = useRef({ x: 0, y: 0 });
 
-  // Return null AFTER all hooks if still loading
-  if (!gltf) return null;
-
   useEffect(() => {
     if (gltf && typeof onLoad === 'function') {
       onLoad();
@@ -453,6 +450,9 @@ function SimpleGlobe({ onLoad, selectedLanguage }) {
       groupRef.current.position.y = floatY;
     }
   });
+
+  // Return null if still loading, otherwise render the globe
+  if (!gltf) return null;
 
   return (
     <group ref={groupRef}>
