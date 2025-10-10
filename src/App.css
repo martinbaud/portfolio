@@ -291,8 +291,8 @@ body {
 
 .hero-globe {
   width: 100%;
-  height: clamp(500px, 60vh, 700px);
-  min-height: 500px;
+  height: clamp(550px, 70vh, 800px);
+  min-height: 550px;
   animation: fadeIn 1s ease-out 0.3s backwards;
 }
 
