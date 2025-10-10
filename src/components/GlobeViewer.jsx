@@ -1,8 +1,38 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import { Html, useGLTF } from '@react-three/drei';
+import { Html } from '@react-three/drei';
+
+// Custom hook to load GLB with proper binary handling
+function useGLBModel(url) {
+  const [gltf, setGltf] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loader = new GLTFLoader();
+
+    // Force binary mode by fetching as arraybuffer first
+    fetch(url)
+      .then(response => response.arrayBuffer())
+      .then(buffer => {
+        loader.parse(buffer, '', (result) => {
+          setGltf(result);
+        }, (err) => {
+          console.error('Error parsing GLB:', err);
+          setError(err);
+        });
+      })
+      .catch(err => {
+        console.error('Error fetching GLB:', err);
+        setError(err);
+      });
+  }, [url]);
+
+  if (error) throw error;
+  return gltf;
+}
 
 const GLOBE_CONFIG = {
   countryColor: 0x000000,
@@ -120,11 +150,14 @@ function AnimatedIcon() {
 }
 
 function SimpleGlobe({ onLoad, selectedLanguage }) {
-  // Load GLB from jsdelivr CDN (GitHub Releases proxy with CORS support)
+  // Load GLB from jsdelivr CDN with custom binary loader
   const modelUrl = import.meta.env.DEV
     ? `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`
     : 'https://cdn.jsdelivr.net/gh/martinbaud/portfolio@v1.0.0/public/assets/models/atlas_ico_subdiv_7.glb';
-  const gltf = useGLTF(modelUrl);
+  const gltf = useGLBModel(modelUrl);
+
+  // Return null while loading
+  if (!gltf) return null;
   const groupRef = useRef();
   const [isInitialized, setIsInitialized] = useState(false);
   const [clickedCountry, setClickedCountry] = useState(null);
@@ -449,15 +482,4 @@ export default function GlobeViewer({ className = '', selectedLanguage = 'en' })
       </Canvas>
     </div>
   );
-}
-
-// Preload the GLB model for both dev and production
-const devModelUrl = '/assets/models/atlas_ico_subdiv_7.glb';
-const prodModelUrl = 'https://cdn.jsdelivr.net/gh/martinbaud/portfolio@v1.0.0/public/assets/models/atlas_ico_subdiv_7.glb';
-
-// Preload the correct model based on environment
-if (import.meta.env.DEV) {
-  useGLTF.preload(devModelUrl);
-} else {
-  useGLTF.preload(prodModelUrl);
 }
