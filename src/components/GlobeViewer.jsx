@@ -168,10 +168,10 @@ function AnimatedIcon() {
 }
 
 function SimpleGlobe({ onLoad, selectedLanguage }) {
-  // Load GLB from jsdelivr CDN using master branch (always fresh)
+  // Load GLB from GitHub raw (bypasses jsdelivr cache issues)
   const modelUrl = import.meta.env.DEV
     ? `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`
-    : 'https://cdn.jsdelivr.net/gh/martinbaud/portfolio@master/public/assets/models/atlas_ico_subdiv_7.glb';
+    : 'https://raw.githubusercontent.com/martinbaud/portfolio/master/public/assets/models/atlas_ico_subdiv_7.glb';
   const gltf = useGLBModel(modelUrl);
 
   // Return null while loading
