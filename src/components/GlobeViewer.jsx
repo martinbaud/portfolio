@@ -121,7 +121,11 @@ function AnimatedIcon() {
 }
 
 function SimpleGlobe({ onLoad, selectedLanguage }) {
-  const gltf = useLoader(GLTFLoader, `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`);
+  // Use jsDelivr CDN to serve the GLB file with correct MIME type
+  const modelUrl = import.meta.env.DEV
+    ? `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`
+    : 'https://cdn.jsdelivr.net/gh/martinbaud/portfolio@master/public/assets/models/atlas_ico_subdiv_7.glb';
+  const gltf = useLoader(GLTFLoader, modelUrl);
   const groupRef = useRef();
   const [isInitialized, setIsInitialized] = useState(false);
   const [clickedCountry, setClickedCountry] = useState(null);
