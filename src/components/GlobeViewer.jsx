@@ -1,74 +1,11 @@
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { Globe } from '@aeryflux/globe3d/react-three-fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Html } from '@react-three/drei';
-
-// Custom hook to load GLB with proper binary handling using Blob URL
-function useGLBModel(url) {
-  const [gltf, setGltf] = useState(null);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const loader = new GLTFLoader();
-    let blobUrl = null;
-
-    // Fetch as blob, create object URL, then load
-    fetch(url)
-      .then(response => response.blob())
-      .then(blob => {
-        // Create a local blob URL
-        blobUrl = URL.createObjectURL(blob);
-
-        // Load the GLB from the blob URL
-        loader.load(
-          blobUrl,
-          (result) => {
-            setGltf(result);
-            // Clean up blob URL after loading
-            URL.revokeObjectURL(blobUrl);
-          },
-          undefined,
-          (err) => {
-            console.error('Error loading GLB:', err);
-            setError(err);
-            if (blobUrl) URL.revokeObjectURL(blobUrl);
-          }
-        );
-      })
-      .catch(err => {
-        console.error('Error fetching GLB:', err);
-        setError(err);
-      });
-
-    // Cleanup on unmount
-    return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
-  }, [url]);
-
-  if (error) throw error;
-  return gltf;
-}
-
-const GLOBE_CONFIG = {
-  countryColor: 0x000000,
-  borderColor: 0xffffff,
-  globeFillColor: 0xffffff,
-  highlightColor: 0xffffff,
-  rotationSpeed: 0.002,
-  countryScale: 1.0,
-  borderScale: 1.01,
-  globeFillScale: 0.98,
-  highlightScale: 1.05
-};
-
-const LANG_TO_COUNTRY = {
-  'en': 'UNITED_STATES_OF_AMERICA',
-  'es': 'SPAIN',
-  'fr': 'FRANCE'
-};
+import { useGlobe } from '../lib/useGlobe.js';
+import { LANG_TO_COUNTRY } from '../lib/globe-config.js';
 
 function AnimatedIcon() {
   const iconRef = useRef();
@@ -167,380 +104,56 @@ function AnimatedIcon() {
   );
 }
 
-function SimpleGlobe({ onLoad, selectedLanguage }) {
-  // Load GLB from GitHub raw (bypasses jsdelivr cache issues)
+function PortfolioGlobe({ onLoad, selectedLanguage }) {
   const modelUrl = import.meta.env.DEV
-    ? `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`
-    : 'https://raw.githubusercontent.com/martinbaud/portfolio/master/public/assets/models/atlas_ico_subdiv_7.glb';
-  const gltf = useGLBModel(modelUrl);
+    ? `${import.meta.env.BASE_URL}models/atlas_ico_subdiv_7.glb`
+    : 'https://raw.githubusercontent.com/martinbaud/portfolio/master/public/models/atlas_ico_subdiv_7.glb';
+  const {
+    clickedCountry,
+    isLoaded,
+    configLoaded,
+    globeConfig,
+    groupRef,
+    globeRef,
+    timeRef,
+    handleCountryClick,
+    handleLoad: hookHandleLoad,
+    getHighlightedCountry,
+    getHighlightColor
+  } = useGlobe({ modelUrl, selectedLanguage, onLoad });
 
-  // Initialize all hooks unconditionally (React rules of hooks)
-  const groupRef = useRef();
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [clickedCountry, setClickedCountry] = useState(null);
-  const countryMeshesRef = useRef({});
-  const borderMeshesRef = useRef({});
-  const timeRef = useRef(0);
-  const { camera, gl } = useThree();
-  const raycaster = useRef(new THREE.Raycaster());
-  const mouse = useRef(new THREE.Vector2());
-  const isDragging = useRef(false);
-  const hasDragged = useRef(false);
-  const previousMousePosition = useRef({ x: 0, y: 0 });
-  const rotationVelocity = useRef({ x: 0, y: 0 });
-  const userRotation = useRef({ x: 0, y: 0 });
+  const { gl } = useThree();
 
-  useEffect(() => {
-    if (gltf && typeof onLoad === 'function') {
-      onLoad();
-    }
-  }, [gltf, onLoad]);
-
-  useEffect(() => {
-    if (gltf && gltf.scene && !isInitialized) {
-      gltf.scene.traverse(obj => {
-        if (!obj.isMesh) return;
-        const name = obj.name.toLowerCase();
-
-        if (name === 'globefill') {
-          obj.material = new THREE.MeshStandardMaterial({
-            color: 0x000000,
-            emissive: 0x000000,
-            emissiveIntensity: 0.0,
-            roughness: 0.8,
-            metalness: 0.1,
-            transparent: true,
-            opacity: 1.0
-          });
-          obj.scale.setScalar(GLOBE_CONFIG.globeFillScale);
-        }
-
-        if (name.startsWith('country_')) {
-          obj.material = new THREE.MeshStandardMaterial({
-            color: GLOBE_CONFIG.countryColor,
-            emissive: 0x000000,
-            emissiveIntensity: 0.1,
-            roughness: 0.8,
-            metalness: 0.1
-          });
-          obj.scale.setScalar(GLOBE_CONFIG.countryScale);
-          const countryCode = name.replace('country_', '').toUpperCase();
-          countryMeshesRef.current[countryCode] = obj;
-        }
-
-        if (name.startsWith('border_') && !name.startsWith('border_city_')) {
-          obj.material = new THREE.MeshStandardMaterial({
-            color: GLOBE_CONFIG.borderColor,
-            emissive: GLOBE_CONFIG.borderColor,
-            emissiveIntensity: 0.5,
-            roughness: 0.2,
-            metalness: 0.3,
-            side: THREE.DoubleSide
-          });
-          obj.scale.setScalar(GLOBE_CONFIG.borderScale);
-          obj.renderOrder = 1;
-          const borderCode = name.replace('border_', '').toUpperCase();
-          borderMeshesRef.current[borderCode] = obj;
-        }
-
-        if (name.startsWith('city_') || name.startsWith('border_city_')) {
-          obj.visible = false;
-        }
-      });
-
-      setIsInitialized(true);
-    }
-  }, [gltf, isInitialized]);
-
-  useEffect(() => {
-    const handleMouseDown = (event) => {
-      isDragging.current = true;
-      hasDragged.current = false;
-      previousMousePosition.current = {
-        x: event.clientX,
-        y: event.clientY
-      };
-      gl.domElement.style.cursor = 'grabbing';
-    };
-
-    const handleMouseMove = (event) => {
-      if (!isInitialized) return;
-
-      const rect = gl.domElement.getBoundingClientRect();
-      mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-      if (isDragging.current) {
-        const deltaX = event.clientX - previousMousePosition.current.x;
-        const deltaY = event.clientY - previousMousePosition.current.y;
-
-        if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
-          hasDragged.current = true;
-        }
-
-        rotationVelocity.current.y = deltaX * 0.005;
-        rotationVelocity.current.x = deltaY * 0.005;
-
-        previousMousePosition.current = {
-          x: event.clientX,
-          y: event.clientY
-        };
-      } else {
-        raycaster.current.setFromCamera(mouse.current, camera);
-        const intersects = raycaster.current.intersectObjects(
-          Object.values(countryMeshesRef.current),
-          false
-        );
-        gl.domElement.style.cursor = intersects.length > 0 ? 'pointer' : 'grab';
-      }
-    };
-
-    const handleMouseUp = (event) => {
-      if (!hasDragged.current) {
-        const rect = gl.domElement.getBoundingClientRect();
-        mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.current.setFromCamera(mouse.current, camera);
-        const intersects = raycaster.current.intersectObjects(
-          Object.values(countryMeshesRef.current),
-          false
-        );
-
-        if (intersects.length > 0) {
-          const clickedMesh = intersects[0].object;
-          const countryCode = Object.keys(countryMeshesRef.current).find(
-            key => countryMeshesRef.current[key] === clickedMesh
-          );
-          if (countryCode) {
-            const baseCountryName = countryCode.replace(/_\d+$/, '');
-            setClickedCountry(baseCountryName);
-          }
-        }
-      }
-
-      isDragging.current = false;
-      hasDragged.current = false;
-      gl.domElement.style.cursor = 'grab';
-    };
-
-    const handleTouchStart = (event) => {
-      if (!isInitialized || event.touches.length === 0) return;
-      event.preventDefault();
-
-      const touch = event.touches[0];
-      isDragging.current = true;
-      hasDragged.current = false;
-      previousMousePosition.current = {
-        x: touch.clientX,
-        y: touch.clientY
-      };
-    };
-
-    const handleTouchMove = (event) => {
-      if (!isInitialized || event.touches.length === 0) return;
-      event.preventDefault();
-
-      const touch = event.touches[0];
-      const rect = gl.domElement.getBoundingClientRect();
-      mouse.current.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.current.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
-
-      if (isDragging.current) {
-        const deltaX = touch.clientX - previousMousePosition.current.x;
-        const deltaY = touch.clientY - previousMousePosition.current.y;
-
-        if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
-          hasDragged.current = true;
-        }
-
-        rotationVelocity.current.y = deltaX * 0.005;
-        rotationVelocity.current.x = deltaY * 0.005;
-
-        previousMousePosition.current = {
-          x: touch.clientX,
-          y: touch.clientY
-        };
-      }
-    };
-
-    const handleTouchEnd = (event) => {
-      if (!isInitialized) return;
-      event.preventDefault();
-
-      if (!hasDragged.current && event.changedTouches.length > 0) {
-        const touch = event.changedTouches[0];
-        const rect = gl.domElement.getBoundingClientRect();
-        mouse.current.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.current.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.current.setFromCamera(mouse.current, camera);
-        const intersects = raycaster.current.intersectObjects(
-          Object.values(countryMeshesRef.current),
-          false
-        );
-
-        if (intersects.length > 0) {
-          const clickedMesh = intersects[0].object;
-          const countryCode = Object.keys(countryMeshesRef.current).find(
-            key => countryMeshesRef.current[key] === clickedMesh
-          );
-          if (countryCode) {
-            const baseCountryName = countryCode.replace(/_\d+$/, '');
-            setClickedCountry(baseCountryName);
-          }
-        }
-      }
-
-      isDragging.current = false;
-      hasDragged.current = false;
-    };
-
-    gl.domElement.addEventListener('mousedown', handleMouseDown);
-    gl.domElement.addEventListener('mousemove', handleMouseMove);
-    gl.domElement.addEventListener('mouseup', handleMouseUp);
-    gl.domElement.addEventListener('mouseleave', handleMouseUp);
-
-    gl.domElement.addEventListener('touchstart', handleTouchStart, { passive: false });
-    gl.domElement.addEventListener('touchmove', handleTouchMove, { passive: false });
-    gl.domElement.addEventListener('touchend', handleTouchEnd, { passive: false });
-    gl.domElement.addEventListener('touchcancel', handleTouchEnd, { passive: false });
-
-    gl.domElement.style.cursor = 'grab';
-    gl.domElement.style.touchAction = 'none';
-
-    return () => {
-      gl.domElement.removeEventListener('mousedown', handleMouseDown);
-      gl.domElement.removeEventListener('mousemove', handleMouseMove);
-      gl.domElement.removeEventListener('mouseup', handleMouseUp);
-      gl.domElement.removeEventListener('mouseleave', handleMouseUp);
-
-      gl.domElement.removeEventListener('touchstart', handleTouchStart);
-      gl.domElement.removeEventListener('touchmove', handleTouchMove);
-      gl.domElement.removeEventListener('touchend', handleTouchEnd);
-      gl.domElement.removeEventListener('touchcancel', handleTouchEnd);
-    };
-  }, [isInitialized, camera, gl]);
-
-  useEffect(() => {
-    if (!isInitialized) return;
-
-    const selectedCountryName = selectedLanguage ? LANG_TO_COUNTRY[selectedLanguage] : null;
-
-    Object.values(countryMeshesRef.current).forEach(mesh => {
-      mesh.material.color.setHex(GLOBE_CONFIG.countryColor);
-      mesh.material.emissive.setHex(0x000000);
-      mesh.material.emissiveIntensity = 0.1;
-      mesh.scale.setScalar(GLOBE_CONFIG.countryScale);
-    });
-
-    Object.values(borderMeshesRef.current).forEach(mesh => {
-      mesh.material.color.setHex(GLOBE_CONFIG.borderColor);
-      mesh.material.emissive.setHex(GLOBE_CONFIG.borderColor);
-      mesh.material.emissiveIntensity = 0.5;
-      mesh.material.roughness = 0.2;
-      mesh.material.metalness = 0.3;
-      mesh.scale.setScalar(GLOBE_CONFIG.borderScale);
-      mesh.renderOrder = 1;
-    });
-
-    const languageCountries = selectedCountryName
-      ? Object.keys(countryMeshesRef.current).filter(code =>
-          code.startsWith(selectedCountryName + '_')
-        )
-      : [];
-
-    const clickedCountries = clickedCountry
-      ? Object.keys(countryMeshesRef.current).filter(code =>
-          code.startsWith(clickedCountry + '_')
-        )
-      : [];
-
-    const allHighlightedCountries = [...new Set([...languageCountries, ...clickedCountries])];
-
-    languageCountries.forEach(countryCode => {
-      const mesh = countryMeshesRef.current[countryCode];
-      mesh.material.color.setHex(0x3fb950);
-      mesh.material.emissive.setHex(0x56d364);
-      mesh.material.emissiveIntensity = 1.5;
-      mesh.material.roughness = 0.3;
-      mesh.material.metalness = 0.7;
-      mesh.scale.setScalar(GLOBE_CONFIG.highlightScale);
-
-      const borderCode = 'COUNTRY_' + countryCode;
-      const borderMesh = borderMeshesRef.current[borderCode];
-
-      if (borderMesh) {
-        borderMesh.material.color.setHex(0xffffff);
-        borderMesh.material.emissive.setHex(0xffffff);
-        borderMesh.material.emissiveIntensity = 1.5;
-        borderMesh.material.roughness = 0.1;
-        borderMesh.material.metalness = 0.8;
-        borderMesh.material.opacity = 1.0;
-        borderMesh.material.transparent = false;
-        borderMesh.material.needsUpdate = true;
-        borderMesh.scale.setScalar(GLOBE_CONFIG.highlightScale);
-        borderMesh.renderOrder = 3;
-        borderMesh.visible = true;
-      }
-    });
-
-    clickedCountries.forEach(countryCode => {
-      const mesh = countryMeshesRef.current[countryCode];
-      mesh.material.color.setHex(0x1f6feb);
-      mesh.material.emissive.setHex(0x58a6ff);
-      mesh.material.emissiveIntensity = 1.5;
-      mesh.material.roughness = 0.3;
-      mesh.material.metalness = 0.7;
-      mesh.scale.setScalar(GLOBE_CONFIG.highlightScale);
-
-      const borderCode = 'COUNTRY_' + countryCode;
-      const borderMesh = borderMeshesRef.current[borderCode];
-
-      if (borderMesh) {
-        borderMesh.material.color.setHex(0xffffff);
-        borderMesh.material.emissive.setHex(0xffffff);
-        borderMesh.material.emissiveIntensity = 1.5;
-        borderMesh.material.roughness = 0.1;
-        borderMesh.material.metalness = 0.8;
-        borderMesh.material.opacity = 1.0;
-        borderMesh.material.transparent = false;
-        borderMesh.material.needsUpdate = true;
-        borderMesh.scale.setScalar(GLOBE_CONFIG.highlightScale);
-        borderMesh.renderOrder = 3;
-        borderMesh.visible = true;
-      }
-    });
-  }, [selectedLanguage, clickedCountry, isInitialized]);
-
-  useFrame((state, delta) => {
-    if (groupRef.current) {
-      if (isDragging.current) {
-        userRotation.current.y += rotationVelocity.current.y;
-        userRotation.current.x += rotationVelocity.current.x;
-      } else {
-        rotationVelocity.current.y *= 0.95;
-        rotationVelocity.current.x *= 0.95;
-        userRotation.current.y += rotationVelocity.current.y;
-        userRotation.current.x += rotationVelocity.current.x;
-        userRotation.current.y -= GLOBE_CONFIG.rotationSpeed;
-      }
-
-      groupRef.current.rotation.y = userRotation.current.y;
-      groupRef.current.rotation.x = userRotation.current.x;
-
-      timeRef.current += delta;
-      const floatY = Math.sin(timeRef.current * 0.5) * 0.15;
-      groupRef.current.position.y = floatY;
-    }
-  });
-
-  // Return null if still loading, otherwise render the globe
-  if (!gltf) return null;
+  const handleLoad = () => {
+    hookHandleLoad();
+  };
+  if (!configLoaded || !globeConfig) {
+    return null;
+  }
 
   return (
     <group ref={groupRef}>
-      <primitive object={gltf.scene} />
+      <group ref={globeRef}>
+        <Globe
+          modelUrl={modelUrl}
+          colors={{
+            country: globeConfig.countryColor,
+            border: globeConfig.borderColor,
+            globeFill: 0x000000,
+            highlight: getHighlightColor(),
+            languageCountry: 0x3fb950
+          }}
+          countryScale={1.0}
+          borderScale={globeConfig.borderScale}
+          globeFillScale={globeConfig.globeFillScale}
+          highlightScale={1.0}
+          enableInteraction={true}
+          selectedCountry={getHighlightedCountry()}
+          languageCountry={selectedLanguage ? LANG_TO_COUNTRY[selectedLanguage] : null}
+          onCountryClick={handleCountryClick}
+          onLoad={handleLoad}
+        />
+      </group>
     </group>
   );
 }
@@ -554,7 +167,7 @@ function Scene({ onLoad, selectedLanguage }) {
       <pointLight position={[-5, -5, 5]} intensity={0.6} color={0xffffff} />
       <hemisphereLight skyColor={0xffffff} groundColor={0x000000} intensity={0.5} />
       <Suspense fallback={null}>
-        <SimpleGlobe onLoad={onLoad} selectedLanguage={selectedLanguage} />
+        <PortfolioGlobe onLoad={onLoad} selectedLanguage={selectedLanguage} />
       </Suspense>
       <AnimatedIcon />
       <EffectComposer>

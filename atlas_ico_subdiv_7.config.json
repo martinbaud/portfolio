@@ -1,0 +1,29 @@
+{
+  "generated_at": "2025-10-12T09:10:25",
+  "ico_subdiv": 7,
+  "radius": 1.0,
+  "invert_poles": true,
+  "extrusions": {
+    "country": {
+      "above": 0.0,
+      "below": 0.0
+    },
+    "city": {
+      "above": 0.0,
+      "below": 0.0
+    }
+  },
+  "border": {
+    "width": 0.0006,
+    "height": 0.0025,
+    "zfight_eps": 8e-05
+  },
+  "counts": {
+    "countries": 374,
+    "cities": 1106
+  },
+  "output": {
+    "glb": "C:\\Users\\BaudM\\Desktop\\dev\\\\geojsonto3D\\res\\atlas_ico_subdiv_7.glb",
+    "config": "C:\\Users\\BaudM\\Desktop\\dev\\\\geojsonto3D\\res\\atlas_ico_subdiv_7.config.json"
+  }
+}
