@@ -1,0 +1,30 @@
+{
+  "generated_at": "2025-10-14T08:03:09Z",
+  "ico_subdiv": 7,
+  "radius": 1.0,
+  "extrusions": {
+    "country": {
+      "above": 0.1,
+      "below": 0.0
+    },
+    "city": {
+      "above": 0.1,
+      "below": 0.0
+    }
+  },
+  "border": {
+    "width": 0.0005,
+    "height": 0.0025,
+    "embed_eps": 0.0002,
+    "zfight_eps": 5e-05
+  },
+  "features": {
+    "border": true,
+    "closing": true,
+    "cities": true
+  },
+  "counts": {
+    "countries": 380,
+    "cities": 200
+  }
+}

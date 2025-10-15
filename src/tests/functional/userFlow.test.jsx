@@ -81,7 +81,7 @@ describe('User Flow - Functional Tests', () => {
     const cvButton = screen.getByRole('link', { name: /download|télécharger|descargar/i });
     expect(cvButton).toBeInTheDocument();
     expect(cvButton).toHaveAttribute('download');
-    expect(cvButton.getAttribute('href')).toMatch(/CV_Martin_Baud_[A-Z]{2}\.pdf/);
+    expect(cvButton.getAttribute('href')).toMatch(/cv\/CV_Martin_Baud_[A-Z]{2}\.pdf/);
   });
 
   it('language preference persists across interactions', async () => {

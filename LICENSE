@@ -1,0 +1,54 @@
+# AeryFlux / Martin Baud Portfolio License (Personal & Non-Commercial)
+
+Copyright (c) 2025 Martin Baud / AeryFlux
+All rights reserved.
+
+---
+
+### 1. Scope
+
+This repository contains the source code and assets for the personal portfolio website of **Martin Baud / AeryFlux**.
+
+The source code, layout, visuals, and written content are provided for **viewing and inspiration only**.
+
+You may:
+- ✅ View, fork, or clone this repository for personal reference.
+- ✅ Learn from the code structure and configuration (educational purpose).
+
+You may **not**:
+- ❌ Reuse, copy, or redistribute the design, branding, or content.
+- ❌ Host a modified or identical version publicly under another name.
+- ❌ Use any visual, logo, or media asset (images, icons, animations, 3D assets) without written consent.
+- ❌ Use this portfolio or its design as a template for commercial projects.
+
+---
+
+### 2. Trademarks and Branding
+
+The name **AeryFlux**, its logo, and related visual identity
+are proprietary to Martin Baud. All rights reserved.
+
+Any unauthorized commercial use of AeryFlux branding or identity
+is strictly prohibited.
+
+---
+
+### 3. Third-Party Licenses
+
+This portfolio may include third-party libraries, icons, or frameworks (e.g., React, Vite, Three.js).  
+Each of these retains its own respective open-source license.
+
+---
+
+### 4. Disclaimer
+
+The source code and assets are provided "as is", without warranty of any kind.
+Use at your own discretion.
+
+---
+
+### 5. Contact
+
+For permissions or collaboration inquiries:  
+📧 martinbaud.git@gmail.com  
+🌐 https://martinbaud.github.io/portfolio/
