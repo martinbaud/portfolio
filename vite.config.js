@@ -9,7 +9,7 @@ export default defineConfig({
   publicDir: 'public',
   server: {
     fs: {
-      // Allow serving files from the parent workspace (local file: dependency)
+      
       allow: ['..']
     }
   },
