@@ -113,7 +113,7 @@ function App() {
               <a href="https://github.com/martinbaud" className="cta-button secondary" target="_blank" rel="noopener noreferrer">
                 <MarkGithubIcon size={16} /> {t.hero.ctaSecondary}
               </a>
-              <a href={`/assets/CV_Martin_Baud_${lang.toUpperCase()}.pdf`} className="cta-button cv-button" download>
+              <a href={`${import.meta.env.BASE_URL}assets/cv/CV_Martin_Baud_${lang.toUpperCase()}.pdf`} className="cta-button cv-button" download>
                 <DownloadIcon size={16} /> {t.hero.downloadCV}
               </a>
             </div>

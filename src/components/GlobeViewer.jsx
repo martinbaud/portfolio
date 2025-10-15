@@ -1,11 +1,8 @@
-import { Suspense, useRef, useState } from 'react';
+import React, { Suspense, useRef, useState, useMemo, memo, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
 import { Globe } from '@aeryflux/globe3d/react-three-fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Html } from '@react-three/drei';
-import { useGlobe } from '../lib/useGlobe.js';
-import { LANG_TO_COUNTRY } from '../lib/globe-config.js';
 
 function AnimatedIcon() {
   const iconRef = useRef();
@@ -105,52 +102,28 @@ function AnimatedIcon() {
 }
 
 function PortfolioGlobe({ onLoad, selectedLanguage }) {
-  const modelUrl = import.meta.env.DEV
-    ? `${import.meta.env.BASE_URL}models/atlas_ico_subdiv_7.glb`
-    : 'https://raw.githubusercontent.com/martinbaud/portfolio/master/public/models/atlas_ico_subdiv_7.glb';
-  const {
-    clickedCountry,
-    isLoaded,
-    configLoaded,
-    globeConfig,
-    groupRef,
-    globeRef,
-    timeRef,
-    handleCountryClick,
-    handleLoad: hookHandleLoad,
-    getHighlightedCountry,
-    getHighlightColor
-  } = useGlobe({ modelUrl, selectedLanguage, onLoad });
+  const modelUrl = `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.glb`;
+  const groupRef = useRef();
+  const globeRef = useRef();
+  const [clickedCountry, setClickedCountry] = useState(null);
 
-  const { gl } = useThree();
+  const StableGlobe = useMemo(() => memo(function StableGlobeInner(props) {
+    return <Globe {...props} />;
+  }), []);
 
   const handleLoad = () => {
-    hookHandleLoad();
+    console.info('@aeryflux/globe3d using configUrl:', `${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.config.json`);
+    onLoad?.();
   };
-  if (!configLoaded || !globeConfig) {
-    return null;
-  }
 
   return (
     <group ref={groupRef}>
       <group ref={globeRef}>
-        <Globe
+        <StableGlobe
           modelUrl={modelUrl}
-          colors={{
-            country: globeConfig.countryColor,
-            border: globeConfig.borderColor,
-            globeFill: 0x000000,
-            highlight: getHighlightColor(),
-            languageCountry: 0x3fb950
-          }}
-          countryScale={1.0}
-          borderScale={globeConfig.borderScale}
-          globeFillScale={globeConfig.globeFillScale}
-          highlightScale={1.0}
-          enableInteraction={true}
-          selectedCountry={getHighlightedCountry()}
-          languageCountry={selectedLanguage ? LANG_TO_COUNTRY[selectedLanguage] : null}
-          onCountryClick={handleCountryClick}
+          configUrl={`${import.meta.env.BASE_URL}assets/models/atlas_ico_subdiv_7.config.json`}
+          selectedCountry={clickedCountry}
+          onCountryClick={(id) => setClickedCountry(id)}
           onLoad={handleLoad}
         />
       </group>
