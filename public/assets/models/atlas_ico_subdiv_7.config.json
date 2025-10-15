@@ -14,7 +14,7 @@
   },
   "border": {
     "width": 0.0005,
-    "height": 0.0015,
+    "height": 0.0025,
     "embed_eps": 0.0002,
     "zfight_eps": 5e-05
   },
